@@ -5,6 +5,8 @@ const logger = require('morgan');
 const Middleware = require('./middleware/default');
 const Router = require('./routes/default-router');
 
+const realPrice = require('./heavy-lifting/api');
+
 
 const app = express();
 
@@ -44,6 +46,13 @@ app.use(Middleware);
  */
 
 app.use(Router);
+
+
+/**
+ * Monitor price and trigger alarm
+ */
+
+setInterval(realPrice, 60000);
 
 
 /**
