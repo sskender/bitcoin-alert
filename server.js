@@ -12,6 +12,13 @@ const PORT = process.env.PORT || 3000;
 
 
 /**
+ * Data
+ */
+
+mydata = require('./mydata');
+
+
+/**
  * Logging
  */
 

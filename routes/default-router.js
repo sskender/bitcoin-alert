@@ -5,12 +5,7 @@ const Router = express.Router();
 
 Router.get('/', (req, res) => {
 
-    /**
-     * Do somethig here.
-     * 
-     * E.g.:
-     */
-    res.send('Router works :D');
+    res.status(200).send(mydata);
 
 });
 
