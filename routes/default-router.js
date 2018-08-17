@@ -8,22 +8,22 @@ Router.get('/add/:price', (req, res) => {
      * Add target price to mydata.
      */
 
-    const price = req.params.price;
-
-    if (isNaN(price)) {
+    if (isNaN(req.params.price)) {
         // not a number
         res.status(400).send(mydata);
     }
     else {
         // valid number
-        const index = mydata["targets"].indexOf(price);
+        const price = Number(req.params.price);
+        const index = mydata.targets.indexOf(price);
 
         /**
          * Check if already exists,
          * don't duplicate.
          */
         if (index === -1) {
-            mydata["targets"].push(price);
+            mydata.targets.push(price);
+            mydata.targets.sort();
         }
 
         res.status(201).send(mydata);
@@ -37,15 +37,14 @@ Router.get('/remove/:price', (req, res) => {
      * Remove specific target price from mydata.
      */
 
-    const price = req.params.price;
-
-    if (isNaN(price)) {
+    if (isNaN(req.params.price)) {
         // not a number
         res.status(400).send(mydata);
     }
     else {
         // valid number
-        const index = mydata["targets"].indexOf(price);
+        const price = Number(req.params.price);
+        const index = mydata.targets.indexOf(price);
 
         if (index === -1) {
             // does not exist
@@ -53,7 +52,7 @@ Router.get('/remove/:price', (req, res) => {
         }
         else {
             // all ok, target price removed
-            mydata["targets"].splice(index, 1);
+            mydata.targets.splice(index, 1);
             res.status(201).send(mydata);
         }
     }
@@ -66,7 +65,7 @@ Router.get('/clear', (req, res) => {
      * Reset => Remove all target prices in mydata.
      */
 
-    mydata["targets"] = [];
+    mydata.targets = [];
     res.status(200).send(mydata);
 
 });
@@ -80,15 +79,14 @@ Router.get('/tolerance/:price', (req, res) => {
      *  See in mydata.js what this does.
      */
 
-    const price = req.params.price;
-
-    if (isNaN(price)) {
+    if (isNaN(req.params.price)) {
         // not a number
         res.status(400).send(mydata);
     }
     else {
         // valid number
-        mydata["tolerance"] = Number(price).toFixed(2);
+        const price = Number(req.params.price);
+        mydata.tolerance = price.toFixed(2);
         res.status(201).send(mydata);
     }
 
@@ -101,7 +99,7 @@ Router.get('/on', (req, res) => {
      * "silent" in mydata is now 0 (false).
      */
 
-    mydata["silent"] = false;
+    mydata.silent = false;
     res.status(200).send(mydata);
 
 });
@@ -116,7 +114,7 @@ Router.get('/off', (req, res) => {
      *  Does not clear "targets" in mydata, only silences alarm.
      */
 
-    mydata["silent"] = true;
+    mydata.silent = true;
     res.status(200).send(mydata);
 
 });
