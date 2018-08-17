@@ -53,7 +53,7 @@ app.use(Router);
  * Monitor price and trigger alarm
  */
 
-setInterval(realPrice, 300000);
+setInterval(realPrice, 180000);
 setInterval(Alarm, 60000);
 
 
