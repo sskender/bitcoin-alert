@@ -6,6 +6,7 @@ const Middleware = require('./middleware/default');
 const Router = require('./routes/default-router');
 
 const realPrice = require('./heavy-lifting/api');
+const Alarm = require('./heavy-lifting/alarm');
 
 
 const app = express();
@@ -52,7 +53,8 @@ app.use(Router);
  * Monitor price and trigger alarm
  */
 
-setInterval(realPrice, 60000);
+setInterval(realPrice, 300000);
+setInterval(Alarm, 60000);
 
 
 /**
