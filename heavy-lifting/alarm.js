@@ -13,12 +13,13 @@ var Alarm = function () {
             
             console.info("[!] Alarm triggered");
 
-            player.play('./notifications/' + mydata.alarm, function (err) {
-                if (err) {
-                    throw err;
-                }
-            });
-
+            if (!mydata.silent) {
+                player.play('./notifications/' + mydata.alarm, function (err) {
+                    if (err) {
+                        throw err;
+                    }
+                });
+            }
         }
 
     });
