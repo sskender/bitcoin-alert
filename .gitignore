@@ -72,3 +72,7 @@ typings/
 # Serverless directories
 .serverless
 
+# Notification sounds
+notifications/*.mp3
+
+package-lock.json
