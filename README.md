@@ -36,6 +36,8 @@ localhost:3000
 
 ### Prerequisites
 
+Application settings are stored in [.env](.env) and [settings.js](settings.js) files. User data is saved in database.
+
 Place your alarm sound in [notifications](notifications) folder. Make sure it's named "alarm.mp3". This is not required if alarm is silenced (see below how to do that). But what's the point then, right?
 
 ### Usage
@@ -79,6 +81,13 @@ Clear all price targets:
 /clear
 ```
 
+Show target prices:
+
+```
+/targets
+/target/<mongodb-id>
+```
+
 Turn alarm off:
 
 ```
@@ -93,10 +102,33 @@ Turn alarm back on:
 
 Every API call will return status code and JSON object.
 
+## MongoDB interaction
+
+Start shell:
+
+```
+mongo
+```
+
+Select database:
+
+```
+show dbs
+use bitcoin-alert
+````
+
+Show collections and data:
+
+```
+show collections
+db.pricetargets.find().pretty()
+```
+
 ## Built With
 
 * [Express](https://expressjs.com/) - Node.js web application framework
 * [Cryptonator API](https://www.cryptonator.com/) - Cryptocurrencies exchange rates API
+* [MongoDB](https://www.mongodb.com/) - free and open-source cross-platform document-oriented database
 
 ## License
 

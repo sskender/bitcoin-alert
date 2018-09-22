@@ -1,6 +1,9 @@
+require('dotenv').load();
+
 const express = require('express');
 const bodyParser = require('body-parser');
 const logger = require('morgan');
+const mongoose = require('mongoose');
 
 const Middleware = require('./middleware/default');
 const Router = require('./routes/default-router');
@@ -15,10 +18,17 @@ const PORT = process.env.PORT || 3000;
 
 
 /**
- * Data
+ * Database
  */
 
-mydata = require('./mydata');
+mongoose.connect(process.env.MONGODB_URI, {useNewUrlParser: true});
+
+
+/**
+ * Settings
+ */
+
+Settings = require('./settings');
 
 
 /**

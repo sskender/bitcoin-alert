@@ -5,7 +5,7 @@ var realPrice = function () {
 
     request({
 
-        url: mydata.API,
+        url: Settings.API,
         json: true
 
     }, function (error, response, body) {
@@ -13,9 +13,9 @@ var realPrice = function () {
         if (!error && response != undefined && response.statusCode === 200) {
 
             try {
-                mydata.price  = Number(body.ticker.price).toFixed(2);
-                mydata.volume = Number(body.ticker.volume).toFixed(2);
-                mydata.time   = new Date();
+                Settings.price  = Number(body.ticker.price).toFixed(2);
+                Settings.volume = Number(body.ticker.volume).toFixed(2);
+                Settings.time   = new Date();
                 
             } catch (err) {
                 console.warn(err);  // Don't want it to be red, not that important.

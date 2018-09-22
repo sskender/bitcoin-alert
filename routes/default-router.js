@@ -1,15 +1,26 @@
 const express = require('express');
+const mongoose = require('mongoose');
+const priceTarget = require('../models/price-target');  // this is model
 
 const Router = express.Router();
+
 
 
 Router.param('price', (req, res, next, price) => {
 
     if (isNaN(price)) {
-        req.price = 0;
+        req.price = undefined;
+        req.success = false;
+        req.error = "Price must be of type Number";
+    }
+    else if (price < 0) {
+        req.price = undefined;
+        req.success = false;
+        req.error = "Price can not be less than zero";
     }
     else {
         req.price = Number(price).toFixed(2);
+        req.success = true;
     }
 
     next();
@@ -17,27 +28,55 @@ Router.param('price', (req, res, next, price) => {
 });
 
 
+Router.param('id', (req, res, next, id) => {
+
+    req._id = id;
+    next();
+
+});
+
+
+
 Router.get('/add/:price', (req, res) => {
     /**
-     * Add target price to mydata.
-     */    
+     * Add target price to database.
+     */
 
-    if (!req.price) {
-        res.status(400).send(mydata);
+    if (!req.success) {
+
+        // 400 = bad request
+        res.status(400).json({
+            success: req.success,
+            error: req.error
+        });
+
     }
     else {
-        /**
-         * Check if already exists,
-         * don't duplicate.
-         */
-        const index = mydata.targets.indexOf(req.price);
 
-        if (index === -1) {
-            mydata.targets.push(req.price);
-            mydata.targets.sort();
-        }
-
-        res.status(201).send(mydata);
+        // create entry
+        const newTarget = new priceTarget({
+            _id: new mongoose.Types.ObjectId(),
+            price: req.price
+        });
+        
+        // using promises
+        newTarget
+            .save()
+            .then(result => {
+                // 201 = created
+                res.status(201).json({
+                    success: true,
+                    priceTarget: result
+                });
+            })
+            .catch(err => {
+                // 500 = internal server error
+                res.status(500).json({
+                    success: false,
+                    error: err
+                });
+            });
+        
     }
 
 });
@@ -45,19 +84,34 @@ Router.get('/add/:price', (req, res) => {
 
 Router.get('/remove/:price', (req, res) => {
     /**
-     * Remove specific target price from mydata.
+     * Remove target price from database.
      */
 
-    const index = mydata.targets.indexOf(req.price);
+    // dont query if price is not valid
+    if (req.success) {
 
-    if (index === -1) {
-        // does not exist
-        res.status(404).send(mydata);
+        priceTarget.deleteMany({price: req.price}, function (err) {
+            if (err) {
+                // 500 = internal server error
+                res.status(500).json({
+                    success: false,
+                    error: err
+                });
+            }
+            else {
+                // 200 = ok
+                res.status(200).json({success: true});
+            }
+        });
+
     }
     else {
-        // all ok, target price removed
-        mydata.targets.splice(index, 1);
-        res.status(201).send(mydata);
+        // 400 = bad request
+        res.status(400).json({
+            success: req.success,
+            error: req.error
+        });
+
     }
 
 });
@@ -65,25 +119,93 @@ Router.get('/remove/:price', (req, res) => {
 
 Router.get('/clear', (req, res) => {
     /**
-     * Reset => Remove all target prices in mydata.
+     * Reset => Remove all target prices from database.
      */
 
-    mydata.targets = [];
-    res.status(200).send(mydata);
+    priceTarget.deleteMany({price: {$gte: 0}}, function (err) {
+
+        if (err) {
+            // 500 = internal server error
+            res.status(500).json({
+                success: false,
+                error: err
+            });
+        }
+        else {
+            // 200 = ok
+            res.status(200).json({success: true});
+        }
+
+    });
+
+});
+
+
+Router.get('/targets', (req, res) => {
+
+    priceTarget.find({price: {$gte: 0}})
+        .exec()
+        .then(doc => {
+            res.status(200).json({
+                success: true,
+                priceTarget: doc
+            });
+        })
+        .catch(err => {
+            // 500 = internal server error
+            res.status(500).json({
+                success: false,
+                error: err
+            });
+        });
+
+});
+
+
+Router.get('/target/:id', (req, res) => {
+
+    priceTarget.findById(req._id)
+        .exec()
+        .then(doc => {
+            // 200 = ok
+            res.status(200).json({
+                success: true,
+                priceTarget: doc
+            });
+        })
+        .catch(err => {
+            // 500 = internal server error
+            res.status(500).json({
+                success: false,
+                error: err
+            });
+        });
 
 });
 
 
 Router.get('/tolerance/:price', (req, res) => {
     /**
-     * Change tolerance in mydata.
+     * Change tolerance in Settings.
      * 
      * NOTE:
-     *  See in mydata.js what this does.
+     *  See in settings.js what this does.
      */
 
-    mydata.tolerance = req.price;
-    res.status(201).send(mydata);
+    if (req.success) {
+
+            Settings.tolerance = req.price;
+            res.status(200).json({success: true});
+
+    }
+    else {
+
+        res.status(400).json({
+            success: req.success,
+            error: req.error
+        });
+
+    }
 
 });
 
@@ -91,11 +213,11 @@ Router.get('/tolerance/:price', (req, res) => {
 Router.get('/on', (req, res) => {
     /**
      * Turn ON alarm.
-     * "silent" in mydata is now 0 (false).
+     * "silent" in Settings is now 0 (false).
      */
 
-    mydata.silent = false;
-    res.status(200).send(mydata);
+    Settings.silent = false;
+    res.status(200).json({success: true});
 
 });
 
@@ -103,21 +225,22 @@ Router.get('/on', (req, res) => {
 Router.get('/off', (req, res) => {
     /**
      * Turn OFF alarm.
-     * "silent" in mydata is now 1 (true).
+     * "silent" in Settings is now 1 (true).
      * 
      * NOTE:
-     *  Does not clear "targets" in mydata, only silences alarm.
+     *  Does not clear "targets" in database, only silences alarm.
+     *  Use /clear to remove target prices.
      */
 
-    mydata.silent = true;
-    res.status(200).send(mydata);
+    Settings.silent = true;
+    res.status(200).json({success: true});
 
 });
 
 
 Router.get('/', (req, res) => {
 
-    res.status(200).send(mydata);
+    res.status(200).json(Settings);
 
 });
 

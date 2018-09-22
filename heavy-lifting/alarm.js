@@ -1,3 +1,5 @@
+const mongoose = require('mongoose');
+const priceTarget = require('../models/price-target');  // this is model
 var player = require('play-sound')();
 
 
@@ -7,22 +9,33 @@ var Alarm = function () {
      * Check if current price matches any of the target prices.
      */
 
-    mydata.targets.forEach(element => {
-        
-        if (Math.abs(mydata.price - element) < mydata.tolerance) {
-            
-            console.info("[!] Alarm triggered");
+    priceTarget.find({price: {$gte: 0}})
 
-            if (!mydata.silent) {
-                player.play('./notifications/' + mydata.alarm, function (err) {
-                    if (err) {
-                        throw err;
+        .exec()
+
+        .then(doc => {
+
+            doc.forEach(element => {
+
+                if (Math.abs(Settings.price - element.price) < Settings.tolerance) {
+                    console.info("[!] Alarm triggered");
+                    if (!Settings.silent) {
+                        player.play('./notifications/' + Settings.alarm, function (err) {
+                            if (err) {
+                                throw err;
+                            }
+                        });
                     }
-                });
-            }
-        }
+                }
 
-    });
+            });
+
+        })
+
+        .catch(err => {
+            console.error("[x] Alarm error:");
+            console.error(err);
+        });
 
 }
 
