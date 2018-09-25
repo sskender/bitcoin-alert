@@ -4,6 +4,7 @@ const Schema = mongoose.Schema;
 
 const priceTargetSchema = new Schema({
     _id: mongoose.Schema.Types.ObjectId,
+    coin: String,
     price: Number
 });
 

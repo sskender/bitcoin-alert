@@ -1,26 +1,33 @@
 const express = require('express');
 const mongoose = require('mongoose');
-const priceTarget = require('../models/price-target');  // this is model
+
+const priceTargetSchema = require('../models/price-target');    // this is model
+const coinSchema = require('../models/coin');                   // this is model
 
 const Router = express.Router();
 
 
 
+
+
 Router.param('price', (req, res, next, price) => {
 
-    if (isNaN(price)) {
+    /**
+     * Price validation:
+     *  targets
+     *  tolerance
+     * 
+     * req.price      => Number
+     * req.priceValid => Bool
+     */
+
+    if (isNaN(price) || price < 0) {
         req.price = undefined;
-        req.success = false;
-        req.error = "Price must be of type Number";
-    }
-    else if (price < 0) {
-        req.price = undefined;
-        req.success = false;
-        req.error = "Price can not be less than zero";
+        req.priceValid = false;
     }
     else {
-        req.price = Number(price).toFixed(2);
-        req.success = true;
+        req.price = Number(price);
+        req.priceValid = true;
     }
 
     next();
@@ -30,35 +37,63 @@ Router.param('price', (req, res, next, price) => {
 
 Router.param('id', (req, res, next, id) => {
 
+    /**
+     * NOTE:
+     *  id stands for MongoDB ID
+     * 
+     * This can be used to GET JSON from database.
+     * 
+     * req._id => String
+     */
+
     req._id = id;
     next();
 
 });
 
 
+Router.param('coin', (req, res, next, coin) => {
 
-Router.get('/add/:price', (req, res) => {
     /**
-     * Add target price to database.
+     * Coin format validation.
+     * 
+     * req.coin      => String
+     * req.coinValid => Bool
      */
 
-    if (!req.success) {
+    const valid = /^([a-zA-Z]{3,3})$/.test(coin);
 
-        // 400 = bad request
-        res.status(400).json({
-            success: req.success,
-            error: req.error
-        });
+    req.coinValid = valid;
+    req.coin = (valid) ? coin.toUpperCase() : undefined;
 
-    }
-    else {
+    next();
+
+});
+
+
+
+
+
+Router.get('/add/:coin/:price', (req, res) => {
+
+    /**
+     * Add target price for specific coin to database.
+     */
+
+    if (req.priceValid && req.coinValid) {
 
         // create entry
-        const newTarget = new priceTarget({
-            _id: new mongoose.Types.ObjectId(),
-            price: req.price
-        });
-        
+        const newTarget = new priceTargetSchema(
+            {
+                _id: new mongoose.Types.ObjectId(),
+                coin: req.coin,
+                price: req.price
+            },
+            {
+                upsert: true
+            }
+        );
+
         // using promises
         newTarget
             .save()
@@ -76,21 +111,30 @@ Router.get('/add/:price', (req, res) => {
                     error: err
                 });
             });
-        
+
+    }
+    else {
+
+        // 400 = bad request
+        res.status(400).json({
+            success: false,
+            error: "Coin format or price or both is invalid!"
+        });
+
     }
 
 });
 
 
-Router.get('/remove/:price', (req, res) => {
+Router.get('/remove/:coin/:price', (req, res) => {
+
     /**
-     * Remove target price from database.
+     * Remove target price for specific coin from database.
      */
 
-    // dont query if price is not valid
-    if (req.success) {
+    if (req.priceValid && req.coinValid) {
 
-        priceTarget.deleteMany({price: req.price}, function (err) {
+        priceTargetSchema.deleteMany({price: req.price}, function (err) {
             if (err) {
                 // 500 = internal server error
                 res.status(500).json({
@@ -106,10 +150,11 @@ Router.get('/remove/:price', (req, res) => {
 
     }
     else {
+
         // 400 = bad request
         res.status(400).json({
-            success: req.success,
-            error: req.error
+            success: false,
+            error: "Coin format or price or both is invalid!"
         });
 
     }
@@ -117,106 +162,197 @@ Router.get('/remove/:price', (req, res) => {
 });
 
 
-Router.get('/clear', (req, res) => {
+Router.get('/clear/:coin', (req, res) => {
+
     /**
-     * Reset => Remove all target prices from database.
+     * Reset => Remove all target prices for specific coin from database.
      */
 
-    priceTarget.deleteMany({price: {$gte: 0}}, function (err) {
+    if (req.coinValid) {
 
-        if (err) {
-            // 500 = internal server error
-            res.status(500).json({
-                success: false,
-                error: err
-            });
-        }
-        else {
-            // 200 = ok
-            res.status(200).json({success: true});
-        }
-
-    });
-
-});
-
-
-Router.get('/targets', (req, res) => {
-
-    priceTarget.find({price: {$gte: 0}})
-        .exec()
-        .then(doc => {
-            res.status(200).json({
-                success: true,
-                priceTarget: doc
-            });
-        })
-        .catch(err => {
-            // 500 = internal server error
-            res.status(500).json({
-                success: false,
-                error: err
-            });
+        priceTargetSchema.deleteMany({price: {$gte: 0}, coin: req.coin}, function (err) {
+            if (err) {
+                // 500 = internal server error
+                res.status(500).json({
+                    success: false,
+                    error: err
+                });
+            }
+            else {
+                // 200 = ok
+                res.status(200).json({success: true});
+            }
         });
-
-});
-
-
-Router.get('/target/:id', (req, res) => {
-
-    priceTarget.findById(req._id)
-        .exec()
-        .then(doc => {
-            // 200 = ok
-            res.status(200).json({
-                success: true,
-                priceTarget: doc
-            });
-        })
-        .catch(err => {
-            // 500 = internal server error
-            res.status(500).json({
-                success: false,
-                error: err
-            });
-        });
-
-});
-
-
-Router.get('/tolerance/:price', (req, res) => {
-    /**
-     * Change tolerance in Settings.
-     * 
-     * NOTE:
-     *  See in settings.js what this does.
-     */
-
-    if (req.success) {
-
-            Settings.tolerance = req.price;
-            res.status(200).json({success: true});
 
     }
     else {
 
+        // 400 = bad request
         res.status(400).json({
-            success: req.success,
-            error: req.error
+            success: false,
+            error: "Coin format is invalid!"
         });
 
     }
 
 });
+
+
+Router.get('/target', (req, res) => {
+
+    /**
+     * GET JSON with all price targets for all coins.
+     * 
+     * NOTE:
+     *  Dump entire database.
+     */
+
+    priceTargetSchema.find()
+        .exec()
+        .then(doc => {
+            // 200 = ok
+            res.status(200).json({
+                success: true,
+                priceTarget: doc
+            });
+        })
+        .catch(err => {
+            // 500 = internal server error
+            res.status(500).json({
+                success: false,
+                error: err
+            });
+        });
+
+});
+
+
+Router.get('/target/:coin', (req, res) => {
+
+    /**
+     * GET JSON with all price targets for specific coin.
+     */
+
+    if (req.coinValid) {
+    
+        priceTargetSchema.find({coin: req.coin})
+            .exec()
+            .then(doc => {
+                // 200 = ok
+                res.status(200).json({
+                    success: true,
+                    priceTarget: doc
+                });
+            })
+            .catch(err => {
+                // 500 = internal server error
+                res.status(500).json({
+                    success: false,
+                    error: err
+                });
+            });
+
+    }
+    else {
+
+          // 400 = bad request
+          res.status(400).json({
+            success: false,
+            error: "Coin format is invalid!"
+        });
+
+    }
+
+});
+
+
+Router.get('/targetid/:id', (req, res) => {
+
+    /**
+     * GET JSON from database with MongoDB id.
+     */
+
+    priceTargetSchema.findById(req._id)
+        .exec()
+        .then(doc => {
+            // 200 = ok
+            res.status(200).json({
+                success: true,
+                priceTarget: doc
+            });
+        })
+        .catch(err => {
+            // 500 = internal server error
+            res.status(500).json({
+                success: false,
+                error: err
+            });
+        });
+
+});
+
+
+Router.get('/tolerance/:coin/:price', (req, res) => {
+
+    /**
+     * Change tolerance price for specific coin in database.
+     */
+
+    if (req.priceValid && req.coinValid) {
+
+        coinSchema.findOneAndUpdate(
+            // find
+            {
+                coin: req.coin
+            },
+            // new data
+            {
+                tolerance: req.price
+            },
+            // create object if it does not exist
+            {
+                upsert: true
+            },
+            // callback
+            function (err, doc) {
+                if (err) {
+                    // 500 = internal server error
+                    res.status(500).json({
+                        success: false,
+                        error: err
+                    });
+                }
+                else {
+                    // 200 = ok
+                    res.status(200).json({success: true});
+                }
+            }
+        );
+
+    }
+    else {
+
+        // 400 = bad request
+        res.status(400).json({
+            success: false,
+            error: "Coin format or price or both is invalid!"
+        });
+
+    }
+
+});
+
+
+
 
 
 Router.get('/on', (req, res) => {
     /**
      * Turn ON alarm.
-     * "silent" in Settings is now 0 (false).
+     * "silent" in Config is now 0 (false).
      */
 
-    Settings.silent = false;
+    Config.silent = false;
     res.status(200).json({success: true});
 
 });
@@ -225,22 +361,25 @@ Router.get('/on', (req, res) => {
 Router.get('/off', (req, res) => {
     /**
      * Turn OFF alarm.
-     * "silent" in Settings is now 1 (true).
+     * "silent" in Config is now 1 (true).
      * 
      * NOTE:
      *  Does not clear "targets" in database, only silences alarm.
      *  Use /clear to remove target prices.
      */
 
-    Settings.silent = true;
+    Config.silent = true;
     res.status(200).json({success: true});
 
 });
 
 
+
+
+
 Router.get('/', (req, res) => {
 
-    res.status(200).json(Settings);
+    res.status(200).json({success: true});
 
 });
 

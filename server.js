@@ -25,10 +25,10 @@ mongoose.connect(process.env.MONGODB_URI, {useNewUrlParser: true});
 
 
 /**
- * Settings
+ * Config
  */
 
-Settings = require('./settings');
+Config = require('./config/config');
 
 
 /**
