@@ -61,7 +61,7 @@ Router.param('coin', (req, res, next, coin) => {
      * req.coinValid => Bool
      */
 
-    const valid = /^([a-zA-Z]{3,3})$/.test(coin);
+    const valid = /^([a-zA-Z]{2,5})$/.test(coin);
 
     req.coinValid = valid;
     req.coin = (valid) ? coin.toUpperCase() : undefined;
