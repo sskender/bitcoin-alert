@@ -4,6 +4,8 @@ const mongoose = require('mongoose');
 const priceTargetSchema = require('../models/price-target');    // this is model
 const coinSchema = require('../models/coin');                   // this is model
 
+const createUpdateCoinCollection = require('../misc/createUpdateCoin');
+
 const Router = express.Router();
 
 
@@ -59,12 +61,27 @@ Router.param('coin', (req, res, next, coin) => {
      * 
      * req.coin      => String
      * req.coinValid => Bool
+     * req.coinCode  => E.G.: btc-usd, eth-btc
      */
 
     const valid = /^([a-zA-Z]{2,5})$/.test(coin);
 
     req.coinValid = valid;
     req.coin = (valid) ? coin.toUpperCase() : undefined;
+
+    switch (req.coin) {
+        case undefined:
+            req.coinCode = undefined;
+            break;
+
+        case 'BTC':
+            req.coinCode = 'BTC-USD';
+            break;
+    
+        default:
+            req.coinCode = req.coin + '-BTC';
+            break;
+    }
 
     next();
 
@@ -98,6 +115,9 @@ Router.get('/add/:coin/:price', (req, res) => {
         newTarget
             .save()
             .then(result => {
+                // also create coinSchema query
+                createUpdateCoinCollection(req.coin, req.coinCode);
+
                 // 201 = created
                 res.status(201).json({
                     success: true,
@@ -162,6 +182,7 @@ Router.get('/remove/:coin/:price', (req, res) => {
 });
 
 
+
 Router.get('/clear/:coin', (req, res) => {
 
     /**
@@ -196,6 +217,7 @@ Router.get('/clear/:coin', (req, res) => {
     }
 
 });
+
 
 
 Router.get('/target', (req, res) => {
@@ -292,6 +314,76 @@ Router.get('/targetid/:id', (req, res) => {
 });
 
 
+
+Router.get('/coin', (req, res) => {
+
+    /**
+     * GET JSON with all coins from database.
+     * 
+     * NOTE:
+     *  Dump entire database.
+     */
+
+    coinSchema.find()
+        .exec()
+        .then(doc => {
+            // 200 = ok
+            res.status(200).json({
+                success: true,
+                coin: doc
+            });
+        })
+        .catch(err => {
+            // 500 = internal server error
+            res.status(500).json({
+                success: false,
+                error: err
+            });
+        });
+
+});
+
+
+Router.get('/coin/:coin', (req, res) => {
+
+    /**
+     * GET JSON with specific coin from database.
+     */
+
+    if (req.coinValid) {
+    
+        coinSchema.find({coin: req.coin})
+            .exec()
+            .then(doc => {
+                // 200 = ok
+                res.status(200).json({
+                    success: true,
+                    coin: doc
+                });
+            })
+            .catch(err => {
+                // 500 = internal server error
+                res.status(500).json({
+                    success: false,
+                    error: err
+                });
+            });
+
+    }
+    else {
+
+          // 400 = bad request
+          res.status(400).json({
+            success: false,
+            error: "Coin format is invalid!"
+        });
+
+    }
+
+});
+
+
+
 Router.get('/tolerance/:coin/:price', (req, res) => {
 
     /**
@@ -309,10 +401,6 @@ Router.get('/tolerance/:coin/:price', (req, res) => {
             {
                 tolerance: req.price
             },
-            // create object if it does not exist
-            {
-                upsert: true
-            },
             // callback
             function (err, doc) {
                 if (err) {
@@ -320,6 +408,13 @@ Router.get('/tolerance/:coin/:price', (req, res) => {
                     res.status(500).json({
                         success: false,
                         error: err
+                    });
+                }
+                else if (doc === null) {
+                    // 404 = not found
+                    res.status(404).json({
+                        success: false,
+                        error: "Coin not found in database"
                     });
                 }
                 else {
@@ -378,6 +473,10 @@ Router.get('/off', (req, res) => {
 
 
 Router.get('/', (req, res) => {
+
+    /**
+     * Doesn't do anything
+     */
 
     res.status(200).json({success: true});
 

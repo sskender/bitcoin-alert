@@ -3,8 +3,8 @@ const Schema = mongoose.Schema;
 
 
 const coinSchema = new Schema({
-    _id: mongoose.Schema.Types.ObjectId,
     coin: String,
+    coinCode: String,   /* E.G.: btc-usd, eth-btc */
     tolerance: Number,
     price: Number,
     volume: Number
