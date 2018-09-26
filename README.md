@@ -36,7 +36,7 @@ localhost:3000
 
 ### Prerequisites
 
-Application settings are stored in [.env](.env) and [settings.js](settings.js) files. User data is saved in database.
+Application settings are stored in [.env](.env) and [config.js](config/config.js) files. User data is saved in database.
 
 Place your alarm sound in [notifications](notifications) folder. Make sure it's named "alarm.mp3". This is not required if alarm is silenced (see below how to do that). But what's the point then, right?
 
@@ -45,47 +45,60 @@ Place your alarm sound in [notifications](notifications) folder. Make sure it's 
 Add alert:
 
 ```
-/add/<target price>
+/add/<coin>/<target price>
 ```
 
 Remove alert:
 
 ```
-/remove/<target price>
+/remove/<coin>/<target price>
 ```
 
 Change tolerance range:
 
 ```
-/tolerance/<price range>
+/tolerance/<coin>/<price range>
 ```
 
 Examples:
 
 ```
-/add/5670
-/add/5100
+/add/btc/5670
+/add/btc/5100
+/add/eth/250
 ```
 
 ```
-/remove/5100
+/remove/btc/5670
+/remove/eth/250
 ```
 
 ```
-/tolerance/10
+/tolerance/btc/25
+/tolerance/eth/10
 ```
 
-Clear all price targets:
+Clear all price targets for coin:
 
 ```
-/clear
+/clear/btc
+/clear/eth
 ```
 
 Show target prices:
 
 ```
-/targets
-/target/<mongodb-id>
+/target
+/target/<coin>
+/targetid/<mongodb-id>
+```
+
+Show coin data like current price, volume, tolerance setting:
+
+```
+/coin
+/coin/<coin>
+/coin/btc
 ```
 
 Turn alarm off:
@@ -122,6 +135,9 @@ Show collections and data:
 ```
 show collections
 db.pricetargets.find().pretty()
+db.coins.find().pretty()
+
+db.coins.deleteMany({coin: 'BTC'})
 ```
 
 ## Built With
