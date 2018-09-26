@@ -1,29 +1,63 @@
+const coinSchema = require('../models/coin');                   // this is model
 const request = require('request');
 
 
 var realPrice = function () {
 
-    request({
+    console.info("[!] Requesting info from exchange")
 
-        url: Settings.API,
-        json: true
+    coinSchema
+        .find()
+        .exec()
+        .then(doc => {
+            /**
+             * For each coin in doc:
+             *      get coinCode for API
+             *      make API request
+             *      findOneAndUpdate:
+             *          save price to database
+             *          save volume to database
+             */
+            doc.forEach(element => {
 
-    }, function (error, response, body) {
+                // request
+                request({
+                    url: Config.API + element.coinCode,
+                    json: true
+                }, function (error, response, body) {
+            
+                    if (!error && response != undefined && response.statusCode === 200) {
+                        try {
 
-        if (!error && response != undefined && response.statusCode === 200) {
+                            coinSchema.findOneAndUpdate(
+                                {
+                                    coin: element.coin
+                                }, 
+                                {
+                                    price:  Number(body.ticker.price),
+                                    volume: Number(body.ticker.volume)
+                                },
+                                function (err, doc) {
+                                    if (err) {
+                                        console.error(err);
+                                    }
+                                });
+                            
+                        }
+                        catch (err) {}
+                    }
+            
+                });
+                // end request
 
-            try {
-                Settings.price  = Number(body.ticker.price).toFixed(2);
-                Settings.volume = Number(body.ticker.volume).toFixed(2);
-                Settings.time   = new Date();
-                
-            } catch (err) {
-                console.warn(err);  // Don't want it to be red, not that important.
-            }
-
-        }
-
-    });
+            });
+        })
+        .catch(err => {
+            /**
+             * On error, log error
+             */
+            console.error(err);
+        });
 
 }
 
