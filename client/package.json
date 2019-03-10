@@ -1,0 +1,15 @@
+{
+    "name": "bitcoin-alert-frontend",
+    "scripts": {
+        "dev": "nuxt"
+    },
+    "dependencies": {
+        "@nuxtjs/vuetify": "^0.5.5",
+        "node-sass": "^4.11.0",
+        "nuxt": "^2.4.5",
+        "pug": "^2.0.3",
+        "pug-plain-loader": "^1.0.0",
+        "sass-loader": "^7.1.0",
+        "vuetify": "^1.5.5"
+    }
+}
