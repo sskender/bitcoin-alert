@@ -1,5 +1,5 @@
 <template>
-  <v-navigation-drawer enable-resize-watcher dark app :value="navOpen">
+  <v-navigation-drawer enable-resize-watcher dark app :value="navOpen" width="250">
     <v-list>
       <v-list-tile>
         <v-list-tile-title class="title">Menu</v-list-tile-title>

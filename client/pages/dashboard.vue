@@ -1,14 +1,16 @@
 <template lang="pug">
   v-app
     Navigation
-    v-content
-      h1 Dash will go here
+    v-content(class="ml-4 mt-5 pr-4")
+      DashDisplayTable
 </template>
 <script>
 import Navigation from "../components/Navigation";
+import DashDisplayTable from "../components/DashDisplayTable";
 export default {
   components: {
-    Navigation
+    Navigation,
+    DashDisplayTable
   }
 };
 </script>

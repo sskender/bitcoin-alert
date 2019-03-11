@@ -1,7 +1,7 @@
 <template lang="pug">
   v-app
     Navigation
-    v-content
+    v-content(class="ml-4")
       h1 Placeholder text for more info
 </template>
 <script>
