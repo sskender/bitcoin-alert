@@ -2,18 +2,17 @@
   v-app
     Navigation
     v-content
-      h1 Placeholder text for more info
+      h1 Dash will go here
 </template>
 <script>
 import Navigation from "../components/Navigation";
 export default {
   components: {
     Navigation
-  },
-  created() {
-    this.$vuetify.theme.primary = "#333";
   }
 };
 </script>
 <style lang="scss">
 </style>
+
+
