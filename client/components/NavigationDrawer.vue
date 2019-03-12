@@ -1,11 +1,6 @@
 <template>
-  <v-navigation-drawer enable-resize-watcher dark app :value="navOpen" width="250">
-    <v-list>
-      <v-list-tile>
-        <v-list-tile-title class="title">Menu</v-list-tile-title>
-      </v-list-tile>
-    </v-list>
-    <v-list dense class="pt-0">
+  <v-navigation-drawer enable-resize-watcher clipped app :value="navOpen" width="250">
+    <v-list class="pt-0">
       <v-list-tile v-for="item in items" :key="item.title" :to="item.href">
         <v-list-tile-action>
           <v-icon>{{ item.icon }}</v-icon>
@@ -24,7 +19,6 @@ export default {
   name: "NavigationDrawer",
   data() {
     return {
-      drawer: true,
       items: [
         { title: "Home", icon: "home", href: "/" },
         { title: "Dashboard", icon: "dashboard", href: "/dashboard" }
@@ -33,7 +27,6 @@ export default {
   },
   methods: {
     toggleDrawer: function() {
-      console.log("ran");
       this.drawer = !this.drawer;
     }
   },

@@ -1,12 +1,17 @@
 <template>
-  <v-toolbar app>
-    <i @click="toggleDrawer()" class="material-icons md-36">settings_applications</i>
+  <v-toolbar dark app class="pl-0">
+    <i
+      @click="toggleDrawer()"
+      class="material-icons md-36"
+      :class="{active: navOpen}"
+    >settings_applications</i>
     <Title/>
   </v-toolbar>
 </template>
 
 <script>
 import Title from "../components/Title";
+import { mapState } from "vuex";
 
 export default {
   name: "NavigationToggle",
@@ -17,6 +22,11 @@ export default {
     toggleDrawer: function() {
       this.$store.commit("toggleNav");
     }
+  },
+  computed: {
+    ...mapState({
+      navOpen: state => state.navOpen
+    })
   }
 };
 </script>
@@ -28,5 +38,13 @@ export default {
 }
 span.text--red {
   color: indianred;
+}
+
+i {
+  transition: all 0.5s ease-in-out;
+}
+
+i.active {
+  transform: rotate(90deg);
 }
 </style>
